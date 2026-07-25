@@ -1,5 +1,7 @@
 # Page Pulse
 
+[![CI](https://github.com/rahulambhore394/Page-Pulse/actions/workflows/ci.yml/badge.svg)](https://github.com/rahulambhore394/Page-Pulse/actions/workflows/ci.yml)
+
 A production-grade URL audit service — built for the Digital Heroes SDE qualification task (Task A & Task B).
 
 Given a URL, it reports status code, response time, HTTPS/security-header hygiene, and on-page basics (title, meta description, heading counts, image alt coverage, internal link count, word count).

@@ -1,5 +1,4 @@
 const express = require('express');
-const path = require('path');
 const { requestId, httpLogger } = require('./middleware/requestContext');
 const { buildRateLimiter } = require('./middleware/rateLimiter');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -25,7 +24,6 @@ function createApp(config = {}) {
   app.use(requestId);
   app.use(httpLogger);
   app.use(express.json({ limit: '10kb' }));
-  app.use(express.static(path.join(__dirname, '..', 'public')));
 
   app.get('/health', (req, res) => {
     res.json({

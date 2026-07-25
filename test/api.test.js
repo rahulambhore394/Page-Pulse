@@ -1,3 +1,12 @@
+// Mock dns.lookup so tests never make real network calls.
+// jest.mock() is hoisted before all require()s — the mock is in place
+// before validateUrl.js loads dns, regardless of statement order here.
+jest.mock('dns', () => ({
+  promises: {
+    lookup: jest.fn().mockResolvedValue({ address: '93.184.216.34', family: 4 }),
+  },
+}));
+
 const request = require('supertest');
 const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici');
 const { createApp } = require('../src/app');

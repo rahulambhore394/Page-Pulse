@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Page Pulse — URL Audit Service</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A production-grade web service to audit URL latency, HTTP status, security headers, and on-page SEO basics." />
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="./style.css" />
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i data-lucide="activity"></i>
+        </div>
+        <div class="logo-text">
+          <h1>Page Pulse</h1>
+          <p>Production-Grade URL Auditor</p>
+        </div>
+      </div>
+      
+      <!-- Live Server Health status -->
+      <div class="health-dashboard" id="healthDashboard" title="Live status of the Page Pulse server">
+        <div class="health-item">
+          <span class="status-dot" id="healthStatusDot"></span>
+          <span id="healthStatusText">Connecting...</span>
+        </div>
+        <div class="health-item">
+          <span class="text-muted">Active:</span>
+          <span class="health-val" id="activeAuditsVal">-</span>
+        </div>
+        <div class="health-item">
+          <span class="text-muted">Queue:</span>
+          <span class="health-val" id="queuedAuditsVal">-</span>
+        </div>
+        <div class="health-item">
+          <span class="text-muted">Cache Hit Ratio:</span>
+          <span class="health-val" id="cacheHitRatioVal">-</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Audit Search -->
+    <main>
+      <section class="audit-search-section">
+        <h2 class="search-title">Audit URL Security & SEO Basics</h2>
+        <p class="search-desc">
+          Get detailed insights on server response latency, HTTPS status, HSTS/CSP/X-Frame headers, title/description meta tag hygiene, and image alt text coverage.
+        </p>
+        
+        <form class="search-form" id="auditForm">
+          <div class="search-icon">
+            <i data-lucide="globe"></i>
+          </div>
+          <input 
+            type="text" 
+            class="search-input" 
+            id="urlInput" 
+            placeholder="Enter URL to audit (e.g. https://example.com)" 
+            required 
+            autocomplete="off"
+            id="audit_url_input"
+          />
+          <button type="submit" class="audit-button" id="auditBtn">
+            Audit Page
+            <i data-lucide="arrow-right"></i>
+          </button>
+        </form>
+        
+        <!-- Predefined chips for quick testing -->
+        <div class="quick-starts">
+          <span>Try:</span>
+          <button type="button" class="chip" data-url="https://example.com">example.com (Simple)</button>
+          <button type="button" class="chip" data-url="https://github.com">github.com (Secure)</button>
+          <button type="button" class="chip" data-url="https://nonexistent-domain-abc-xyz-123.com">non-existent.com (Error)</button>
+          <button type="button" class="chip" data-url="http://127.0.0.1">localhost (SSRF Guard)</button>
+        </div>
+      </section>
+
+      <!-- Error Alert Box -->
+      <div class="error-banner" id="errorBanner">
+        <div class="error-icon">
+          <i data-lucide="alert-octagon"></i>
+        </div>
+        <div class="error-details">
+          <h4>Audit Failed</h4>
+          <p id="errorText">An error occurred while auditing the URL.</p>
+          <div class="error-meta" id="errorMeta">Request ID: N/A</div>
+        </div>
+      </div>
+
+      <!-- Loading / Progress Wizard -->
+      <div class="loading-wizard" id="loadingWizard">
+        <div class="wizard-title">
+          <i data-lucide="loader" class="wizard-spinner"></i>
+          <span>Performing URL Audits...</span>
+        </div>
+        
+        <div class="wizard-steps">
+          <div class="wizard-step" id="step0">
+            <div class="step-indicator">1</div>
+            <span class="step-label">Parse URL structure</span>
+            <span class="step-status">Pending</span>
+          </div>
+          <div class="wizard-step" id="step1">
+            <div class="step-indicator">2</div>
+            <span class="step-label">Execute DNS & SSRF Guards</span>
+            <span class="step-status">Pending</span>
+          </div>
+          <div class="wizard-step" id="step2">
+            <div class="step-indicator">3</div>
+            <span class="step-label">Fetch upstream server resource</span>
+            <span class="step-status">Pending</span>
+          </div>
+          <div class="wizard-step" id="step3">
+            <div class="step-indicator">4</div>
+            <span class="step-label">Scan Response Headers & DOM elements</span>
+            <span class="step-status">Pending</span>
+          </div>
+          <div class="wizard-step" id="step4">
+            <div class="step-indicator">5</div>
+            <span class="step-label">Generate Score & Audit Report</span>
+            <span class="step-status">Pending</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Results Panel -->
+      <div class="dashboard-results" id="dashboardResults">
+        <div class="dashboard-grid">
+          
+          <!-- Column Left -->
+          <div class="column-left">
+            <!-- Score Gauge Card -->
+            <div class="glass-panel score-card">
+              <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 140 140">
+                  <defs>
+                    <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="var(--secondary)" />
+                      <stop offset="100%" stop-color="var(--primary)" />
+                    </linearGradient>
+                  </defs>
+                  <circle class="gauge-track" cx="70" cy="70" r="64" />
+                  <circle class="gauge-fill" id="gaugeFill" cx="70" cy="70" r="64" />
+                </svg>
+                <div class="gauge-percentage" id="gaugePercent">0%</div>
+              </div>
+              <h3 class="score-title">Page Pulse Score</h3>
+              <p class="score-subtitle" id="scoreSubtitle">Evaluating...</p>
+            </div>
+
+            <!-- Latency / Response Time Dial -->
+            <div class="glass-panel speed-card">
+              <h3 class="score-title">Response Time</h3>
+              <div class="speed-value-display">
+                <span class="speed-number" id="resResponseTime">0</span>
+                <span class="speed-unit" id="resResponseTimeUnit">ms</span>
+              </div>
+              <div class="speed-meter">
+                <div class="speed-progress" id="resResponseTimeMeter"></div>
+              </div>
+              <div class="speed-label" id="resResponseTimeLabel">Analyzing...</div>
+            </div>
+
+            <!-- General Metadata Card -->
+            <div class="glass-panel meta-info-card">
+              <div class="meta-row">
+                <span class="meta-label">Target URL</span>
+                <a class="meta-value" id="resUrl" href="#" target="_blank">-</a>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Final URL</span>
+                <a class="meta-value" id="resFinalUrl" href="#" target="_blank">-</a>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Content Type</span>
+                <span class="meta-value" id="resContentType">-</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Page Size</span>
+                <span class="meta-value" id="resContentSize">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column Right -->
+          <div class="column-right">
+            <!-- Header Badges -->
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <span class="badge" id="resStatusCode">000</span>
+              <span class="badge" id="resHttpsBadge"><i data-lucide="shield"></i> SSL Status</span>
+              <span class="badge" id="resCacheBadge"><i data-lucide="database"></i> Cache Status</span>
+            </div>
+
+            <!-- Security Audit Card -->
+            <div class="glass-panel">
+              <h3 class="detail-section-title"><i data-lucide="lock" style="color: var(--primary)"></i> HTTP Security Headers</h3>
+              <div class="security-list">
+                
+                <!-- HSTS -->
+                <div class="security-item">
+                  <div class="security-item-status" id="secHstsStatus">
+                    <i data-lucide="check"></i>
+                  </div>
+                  <div class="security-item-details">
+                    <div class="security-item-title">HSTS Enforced</div>
+                    <div class="security-item-desc" id="secHstsDesc">Strict-Transport-Security enforces HTTPS connectivity.</div>
+                  </div>
+                </div>
+
+                <!-- CSP -->
+                <div class="security-item">
+                  <div class="security-item-status" id="secCspStatus">
+                    <i data-lucide="check"></i>
+                  </div>
+                  <div class="security-item-details">
+                    <div class="security-item-title">Content Security Policy</div>
+                    <div class="security-item-desc" id="secCspDesc">CSP blocks illegal cross-script injections.</div>
+                  </div>
+                </div>
+
+                <!-- X-Frame-Options -->
+                <div class="security-item">
+                  <div class="security-item-status" id="secXfoStatus">
+                    <i data-lucide="check"></i>
+                  </div>
+                  <div class="security-item-details">
+                    <div class="security-item-title">Clickjacking Guard</div>
+                    <div class="security-item-desc" id="secXfoDesc">X-Frame-Options prevents overlay frame tricks.</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- SEO & DOM Basics Card -->
+            <div class="glass-panel" id="pageBasicsSection">
+              <h3 class="detail-section-title"><i data-lucide="search" style="color: var(--secondary)"></i> On-Page SEO Basics</h3>
+              
+              <div class="card-grid-2">
+                <!-- Page Title -->
+                <div class="seo-metric-box" style="grid-column: span 2;">
+                  <div class="seo-metric-header">
+                    <span class="seo-metric-label">Document Title</span>
+                    <span id="seoTitleLength" class="badge">-</span>
+                  </div>
+                  <div class="seo-metric-title-text" id="seoTitle">-</div>
+                </div>
+
+                <!-- Meta Description -->
+                <div class="seo-metric-box" style="grid-column: span 2;">
+                  <div class="seo-metric-header">
+                    <span class="seo-metric-label">Meta Description</span>
+                    <span id="seoDescLength" class="badge">-</span>
+                  </div>
+                  <div class="seo-metric-desc-text" id="seoDesc">-</div>
+                </div>
+
+                <!-- Headings -->
+                <div class="seo-metric-box">
+                  <div class="seo-metric-header">
+                    <span class="seo-metric-label">Semantic Headings</span>
+                  </div>
+                  <div class="heading-tag-list">
+                    <div class="heading-tag-badge">
+                      <span class="heading-tag-name">H1</span>
+                      <div class="heading-tag-count" id="seoH1Count">0</div>
+                    </div>
+                    <div class="heading-tag-badge">
+                      <span class="heading-tag-name">H2</span>
+                      <div class="heading-tag-count" id="seoH2Count">0</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Text & Connections -->
+                <div class="seo-metric-box">
+                  <div class="seo-metric-header">
+                    <span class="seo-metric-label">Page Structure</span>
+                  </div>
+                  <div class="heading-tag-list">
+                    <div class="heading-tag-badge">
+                      <span class="heading-tag-name">Words</span>
+                      <div class="heading-tag-count" id="seoWordCount">0</div>
+                    </div>
+                    <div class="heading-tag-badge">
+                      <span class="heading-tag-name">Int. Links</span>
+                      <div class="heading-tag-count" id="seoLinkCount">0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Alt Tags Card -->
+            <div class="glass-panel alt-coverage-card" id="imagesSection">
+              <h3 class="detail-section-title"><i data-lucide="image" style="color: var(--success)"></i> Image Alt Attributes</h3>
+              <div class="alt-stats-row">
+                <span class="text-secondary" style="font-weight: 500;">Alt Tag Coverage</span>
+                <span class="heading-tag-count" id="imgAltCoverage" style="margin-top: 0; font-size: 20px;">0%</span>
+              </div>
+              <div class="alt-progress-bar">
+                <div class="alt-progress-fill" id="imgAltCoverageBar"></div>
+              </div>
+              <p class="seo-metric-desc-text" id="imgAltStats" style="margin-bottom: 12px;">0 of 0 images covered.</p>
+              <div class="alt-guideline-box">
+                <strong>Accessibility Tip:</strong> Every image must have an <code>alt</code> tag to assist screen-readers. For decorative items, supply an empty value <code>alt=""</code>.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Raw JSON data toggle -->
+        <div class="glass-panel json-view-card" id="jsonViewCard">
+          <div class="json-view-header" id="jsonViewHeader">
+            <h3><i data-lucide="code" style="color: var(--text-muted)"></i> Raw JSON Response</h3>
+            <i data-lucide="chevron-down" class="json-toggle-icon"></i>
+          </div>
+          <div class="json-code-container">
+            <pre class="json-code"><code id="rawJsonCode">{}</code></pre>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <p>Page Pulse — Built for Digital Heroes Training Task</p>
+      <p style="margin-top: 6px; font-size: 12px; opacity: 0.8;">
+        &copy; 2026 <a href="https://digitalheroesco.com" target="_blank">digitalheroesco.com</a>
+      </p>
+    </footer>
+  </div>
+
+  <!-- Client-side script -->
+  <script src="./app.js"></script>
+</body>
+</html>

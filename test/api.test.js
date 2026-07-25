@@ -1,13 +1,5 @@
-// Mock dns.lookup so tests never make real network calls.
-// jest.mock() is hoisted before all require()s — the mock is in place
-// before validateUrl.js loads dns, regardless of statement order here.
-jest.mock('dns', () => ({
-  promises: {
-    lookup: jest.fn().mockResolvedValue({ address: '93.184.216.34', family: 4 }),
-  },
-}));
-
 const request = require('supertest');
+const dns = require('dns');
 const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici');
 const { createApp } = require('../src/app');
 
@@ -38,8 +30,15 @@ describe('POST /api/audit', () => {
   let app;
   let mockAgent;
   let originalDispatcher;
+  let dnsLookupSpy;
 
   beforeEach(() => {
+    // Stub dns.lookup so no real DNS packets leave the process.
+    // Works on all platforms without jest module-mock hoisting.
+    dnsLookupSpy = jest
+      .spyOn(dns.promises, 'lookup')
+      .mockResolvedValue({ address: '93.184.216.34', family: 4 });
+
     ({ app } = createApp({ timeoutMs: 2000, maxConcurrent: 5, cacheTtlSeconds: 60, rateLimitMax: 100 }));
     originalDispatcher = getGlobalDispatcher();
     mockAgent = new MockAgent();
@@ -48,6 +47,7 @@ describe('POST /api/audit', () => {
   });
 
   afterEach(async () => {
+    dnsLookupSpy.mockRestore();
     setGlobalDispatcher(originalDispatcher);
     await mockAgent.close();
   });

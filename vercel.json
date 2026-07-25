@@ -1,6 +1,18 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/health", "destination": "/api/index.js" }
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "public" }
+    },
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/health",   "dest": "/api/index.js" }
   ]
 }
